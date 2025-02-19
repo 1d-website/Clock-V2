@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clock</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300&display=swap" rel="stylesheet">
+    <style>
+        body.dark-theme {
+            font-family: 'Roboto Mono', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #121212;
+            color: #ffffff;
+        }
+
+        .clock.dark-theme {
+            font-size: 14rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(34, 34, 34, 0.9);
+            padding: 50px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s;
+        }
+
+        /* Radio button styles adjusted for dark theme */
+        .radio-inputs {
+            position: relative;
+            display: flex;
+            flex-wrap: wrap;
+            border-radius: 0.5rem;
+            background-color: #333;
+            box-sizing: border-box;
+            box-shadow: 0 0 0px 1px rgba(255, 255, 255, 0.1);
+            padding: 0.25rem;
+            width: 300px;
+            font-size: 14px;
+            margin: 0 auto 20px auto;
+        }
+
+        .radio-inputs .radio {
+            flex: 1 1 auto;
+            text-align: center;
+        }
+
+        .radio-inputs .radio input {
+            display: none;
+        }
+
+        .radio-inputs .radio .name {
+            display: flex;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            border: none;
+            padding: .5rem 0;
+            color: #ffffff;
+            transition: all .15s ease-in-out;
+        }
+
+        .radio-inputs .radio input:checked + .name {
+            background-color: #555;
+            font-weight: 600;
+        }
+
+        /* Rest of your existing CSS styles remain unchanged */
+        /* ... (other styles remain the same) ... */
+    </style>
+</head>
+<body class="dark-theme">
+    <div class="clock" id="clock">
+        <!-- Clock elements remain unchanged -->
+    </div>
+    <footer style="position: absolute; bottom: 20px; width: 100%; text-align: center;">
+        <div class="radio-inputs">
+            <label class="radio">
+                <input type="radio" name="timeSource" value="local" checked>
+                <span class="name">Local Time</span>
+            </label>
+            <label class="radio">
+                <input type="radio" name="timeSource" value="internet">
+                <span class="name">Internet Time</span>
+            </label>
+        </div>
+        <p>A part of the cheesecake project</p>
+        <p>Feel free to use this clock under the MIT license</p>
+        <button class="btn" onclick="toggleFullscreen()">Toggle full screen</button>
+    </footer>
+    <script>
+        let timeOffset = 0;
+        let isInternetTime = false;
+
+        async function fetchTimeOffset() {
+            try {
+                const response = await fetch('https://worldtimeapi.org/api/ip');
+                const data = await response.json();
+                const apiTime = new Date(data.utc_datetime);
+                const localTime = new Date();
+                timeOffset = apiTime - localTime;
+            } catch (error) {
+                console.error('Error fetching time:', error);
+                timeOffset = 0;
+            }
+        }
+
+        // Update internet time every minute
+        setInterval(() => {
+            if (isInternetTime && navigator.onLine) fetchTimeOffset();
+        }, 60000);
+
+        // Event listeners for radio buttons
+        document.querySelectorAll('input[name="timeSource"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                isInternetTime = radio.value === 'internet';
+                if (isInternetTime && navigator.onLine) fetchTimeOffset();
+                updateClock();
+            });
+        });
+
+        // Online/offline detection
+        window.addEventListener('online', updateClock);
+        window.addEventListener('offline', updateClock);
+
+        function updateClock() {
+            let now;
+            if (isInternetTime && navigator.onLine) {
+                now = new Date(new Date().getTime() + timeOffset);
+            } else {
+                now = new Date();
+            }
+
+            // Existing clock update logic
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const period = hours >= 12 ? 'PM' : 'AM';
+
+            hours = hours % 12 || 12;
+            const hoursString = String(hours).padStart(2, '0');
+
+            document.getElementById('hours-tens').textContent = hoursString[0];
+            document.getElementById('hours-ones').textContent = hoursString[1];
+            document.getElementById('minutes-tens').textContent = minutes[0];
+            document.getElementById('minutes-ones').textContent = minutes[1];
+            document.getElementById('seconds-tens').textContent = seconds[0];
+            document.getElementById('seconds-ones').textContent = seconds[1];
+            document.getElementById('period').textContent = period;
+        }
+
+        // Existing fullscreen and interval code
+        setInterval(updateClock, 1000);
+        updateClock();
+    </script>
+</body>
+</html>
